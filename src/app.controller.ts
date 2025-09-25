@@ -1,0 +1,126 @@
+import express from "express";
+import type { Request, Response } from "express";
+
+import cors from "cors";
+import { rateLimit } from "express-rate-limit";
+import helmet from "helmet";
+
+// Setup Env Config
+import { resolve } from "node:path";
+import { config } from "dotenv";
+config({ path: resolve("./config/.env.development") })
+
+
+import { authRouter, initializeIo, postsRouter, usersRouter } from "./modules/";
+import { glopalErrorHandler } from "./utils/response/error.response";
+import connectToDataBase from "./DataBase/DB_Connection";
+
+import listEndpoints from "express-list-endpoints";
+
+interface Endpoint {
+    path: string;
+    methods: string[];
+}
+
+// App Start Point
+export default async function bootstrap(): Promise<void> {
+
+    const app = express();
+    const port: Number | String = process.env.PORT || 5000;
+
+    // Third Party MiddleWares
+    const limiter = rateLimit({
+        windowMs: 60 * 6000,
+        limit: 2000,
+        message: { error: "Too Many Requests , Try Again Later" },
+        statusCode: 429
+    });
+    app.use(cors(), helmet(), express.json(), limiter);
+
+    // DataBase
+    await connectToDataBase();
+
+    // AppLcation Routing 
+
+    // Main Router
+    app.get("/", (req: Request, res: Response): Response => {
+        return res.json({
+            message: "Welcome To LinkSphere BackEnd API",
+            info: "LinkSphere is a social networking application that connects people, enables sharing posts, and fosters meaningful interactions in a modern digital community.",
+            about: "This APP Created By Dev:Adham Zain @2025",
+        })
+    })
+
+    // Authentacition Router
+    app.use("/auth", authRouter);
+
+
+
+    // Users Router
+    app.use("/users", usersRouter);
+
+    // Users Router
+    app.use("/posts", postsRouter);
+
+    const endpoints = listEndpoints(app);
+
+    endpoints.forEach((ep: Endpoint) => {
+        ep.methods.forEach((method: string) => {
+            console.log(`${method} {{BASE_URL}}${ep.path}`);
+        });
+    });
+
+    console.log("=== START LISTING ENDPOINTS ===");
+    console.log(listEndpoints(app));
+    console.log("=== END LISTING ENDPOINTS ===");
+
+
+    // Get Asset From S3 :
+    //  ملهاش لازمة حالياً 
+    //  انا برجع لينك الصورة دايركت مع اليوزر في البروفايل
+    // أبقى اشغلها لما أحتاجها
+
+
+    // app.get("/images/*path", async (req, res): Promise<void> => {
+    //     const { path } = req.params as { path: string[] };
+    //     const Key = path.join("/");
+    //     // const s3Response = await getAsset({ Key });
+    //     // if (!s3Response?.Body) {
+    //     //     throw new BadRequestException("Fail To Fetch This Resourse");
+    //     // }
+    //     // res.setHeader(
+    //     //     "Content-Type",
+    //     //     s3Response.ContentType || "application/octet-stram"
+    //     // );
+    //     // return s3CreateWriteStram(s3Response.Body as NodeJS.ReadableStream, res);
+    //     res.json({key})
+    // })
+
+
+    // Glopal Error Handler
+    app.use(glopalErrorHandler)
+
+
+    // 404 Router 
+    app.all("{*dummy}", (req: Request, res: Response) => {
+        res.status(404).json({
+            message: "Page Not Found",
+            info: "Plase Check Your Method And URL Path",
+            method: req.method,
+            path: req.path
+        })
+    });
+
+
+
+    const httpServer = app.listen(port, () => {
+        console.log("===================================")
+        console.log("LinkSphere App Is Runing Succses 🚀")
+        console.log("===================================")
+    });
+
+
+    initializeIo(httpServer);
+
+
+}
