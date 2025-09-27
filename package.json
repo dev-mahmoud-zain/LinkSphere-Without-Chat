@@ -7,7 +7,7 @@
   "build": "tsc",
   "start": "node dist/index.js",
   "start:dev": "concurrently \"tsc --watch\" \"node --watch dist/index.js\""
-}
+}و
   "keywords": [],
   "author": "",
   "license": "ISC",
