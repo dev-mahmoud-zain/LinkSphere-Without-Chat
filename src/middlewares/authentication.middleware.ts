@@ -3,7 +3,7 @@ import { BadRequestException, UnAuthorizedException } from "../utils/response/er
 import { TokenService, TokenTypeEnum } from "../utils/security/token.security";
 import { RoleEnum } from "../DataBase/models/user.model";
 
-export const authenticationMiddeware = (tokenType: TokenTypeEnum = TokenTypeEnum.accses) => {
+export const authenticationMiddleware = (tokenType: TokenTypeEnum = TokenTypeEnum.access) => {
 
     return async (req: Request, res: Response, next: NextFunction) => {
 
@@ -33,7 +33,7 @@ export const authenticationMiddeware = (tokenType: TokenTypeEnum = TokenTypeEnum
 
 }
 
-export const authorizationMiddeware = (accsesRoles: RoleEnum[]) => {
+export const authorizationMiddleware = (accessRoles: RoleEnum[]) => {
 
     return async (req: Request, res: Response, next: NextFunction) => {
 
@@ -52,10 +52,10 @@ export const authorizationMiddeware = (accsesRoles: RoleEnum[]) => {
 
         const { decoded, user } = await tokenService.decodeToken({
             authorization: req.headers.authorization
-            , tokenType: TokenTypeEnum.accses
+            , tokenType: TokenTypeEnum.access
         })
 
-        if (!accsesRoles.includes(user.role)) {
+        if (!accessRoles.includes(user.role)) {
             throw new UnAuthorizedException("Not Authorized Account")
         }
 

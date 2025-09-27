@@ -1,7 +1,7 @@
 import { FilterQuery, Model, PopulateOptions, ProjectionType, QueryOptions } from "mongoose";
-import { HPostDucment, IPost } from "../models/post.model";
+import { HPostDocument, IPost } from "../models/post.model";
 import { DataBaseRepository } from "./database.repository"
-import { CommentFlagEnum, CommentModel, HCommentDucment } from "../models";
+import { CommentFlagEnum, CommentModel, HCommentDocument } from "../models";
 import { CommentRepository } from "./comment.repository";
 
 export class PostRepository extends DataBaseRepository<IPost> {
@@ -28,7 +28,7 @@ export class PostRepository extends DataBaseRepository<IPost> {
             .populate(options?.populate as PopulateOptions[]).cursor();
 
 
-        let result: { post: HPostDucment, comments: HCommentDucment[] }[] = [];
+        let result: { post: HPostDocument, comments: HCommentDocument[] }[] = [];
 
         for (let post = await cursor.next(); post !== null; post = await cursor.next()) {
 

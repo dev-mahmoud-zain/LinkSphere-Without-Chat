@@ -28,7 +28,7 @@ export interface IComment {
     updatedAt?: Date;
 }
 
-export type HCommentDucment = HydratedDocument<IComment>;
+export type HCommentDocument = HydratedDocument<IComment>;
 
 const commentSchima = new Schema<IComment>({
     flag: { type: String, enum: CommentFlagEnum, default: CommentFlagEnum.comment },

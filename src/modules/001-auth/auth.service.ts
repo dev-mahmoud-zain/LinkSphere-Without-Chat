@@ -18,9 +18,9 @@ import { LogoutFlagEnum, TokenService } from "../../utils/security/token.securit
 import { JwtPayload } from "jsonwebtoken";
 import { OAuth2Client, TokenPayload } from "google-auth-library";
 import { UpdateQuery } from "mongoose";
-import { succsesResponse } from "../../utils/response/succses.response";
+import { successResponse } from "../../utils/response/success.response";
 import { UserRepository } from "../../DataBase/repository";
-import { UserModel, HUserDoucment, ProviderEnum, TwoSetupVerificationEnum } from "../../DataBase/models";
+import { UserModel, HUserDocument, ProviderEnum, TwoSetupVerificationEnum } from "../../DataBase/models";
 
 
 
@@ -44,7 +44,7 @@ class AuthenticationServices {
         })
 
         if (userExists) {
-            throw new ConflictException("Email Alredy Exists Try To Login", {
+            throw new ConflictException("Email Already Exists Try To Login", {
                 issues: {
                     path: "email",
                     value: email
@@ -66,7 +66,7 @@ class AuthenticationServices {
             }]
         })
 
-        return succsesResponse({
+        return successResponse({
             res,
             statusCode: 201,
             info: "We Sent A Confirm OTP To Your Email , Please Confirm It To Login"
@@ -119,7 +119,7 @@ class AuthenticationServices {
             },
         })
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "Email Confirmed Succses",
         })
@@ -185,7 +185,7 @@ class AuthenticationServices {
         emailEvent.emit("confirmEmail", { to: email, OTPCode });
 
 
-        return succsesResponse({
+        return successResponse({
             res,
             statusCode: 200,
             info: "Email Confirmed Succses"
@@ -222,14 +222,14 @@ class AuthenticationServices {
         })
 
         if (!user) {
-            throw new NotFoundException("Not Registerd Account Or Registerd With Another Provider");
+            throw new NotFoundException("Not Registered Account Or Registered With Another Provider");
         }
 
 
         const credentials = await this.tokenService.createLoginCredentials(user)
 
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "login Succses",
             data: { credentials }
@@ -273,7 +273,7 @@ class AuthenticationServices {
 
         const credentials = await this.tokenService.createLoginCredentials(newUser)
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "Signup Succses",
             data: { credentials }
@@ -325,7 +325,7 @@ class AuthenticationServices {
 
             emailEvent.emit("loginTwoStepVerification", { to: email, OTPCode });
 
-            return succsesResponse({
+            return successResponse({
                 res,
                 info: "OTP Code Sent To Your Email",
             })
@@ -334,7 +334,7 @@ class AuthenticationServices {
 
         const credentials = await this.tokenService.createLoginCredentials(user);
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "Login Succses",
             data: { credentials }
@@ -377,7 +377,7 @@ class AuthenticationServices {
 
         const credentials = await this.tokenService.createLoginCredentials(user);
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "Login Succses",
             data: { credentials }
@@ -408,7 +408,7 @@ class AuthenticationServices {
 
 
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "Logout Succses",
         })
@@ -417,11 +417,11 @@ class AuthenticationServices {
 
     refreshToken = async (req: Request, res: Response): Promise<Response> => {
 
-        const credentials = await this.tokenService.createLoginCredentials(req.user as HUserDoucment)
+        const credentials = await this.tokenService.createLoginCredentials(req.user as HUserDocument)
 
         await this.tokenService.createRevokeToken(req.tokenDecoded as JwtPayload);
 
-        return succsesResponse({
+        return successResponse({
             res,
             data: { credentials }
         })
@@ -464,7 +464,7 @@ class AuthenticationServices {
 
 
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "Password reset code has been sent to your registered email"
         })
@@ -489,7 +489,7 @@ class AuthenticationServices {
         }
         const OTPCode = generateOTP();
 
-        let data: UpdateQuery<HUserDoucment> = {};
+        let data: UpdateQuery<HUserDocument> = {};
 
         // وصل الحد الأقصى بس مخدش بلوك
         if (!user.forgetPasswordBlockExpiresAt && user.forgetPasswordCount === 4) {
@@ -538,7 +538,7 @@ class AuthenticationServices {
         await this.userModel.updateOne({ email }, data)
         emailEvent.emit("forgetPassword", { to: email, OTPCode })
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "A new password reset code has been sent to your registered email"
         })
@@ -599,7 +599,7 @@ class AuthenticationServices {
 
         const credentials = await this.tokenService.createLoginCredentials(user);
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: "Your Password Changed Succses",
             data: { credentials }
@@ -634,7 +634,7 @@ class AuthenticationServices {
         const event = action === TwoSetupVerificationEnum.enable ? "enableTwoStepVerification" : "disableTwoStepVerification";
         emailEvent.emit(event, { to: user?.email, OTPCode });
 
-        return succsesResponse({
+        return successResponse({
             res,
             info: `OTP Code Sent To Your Email , will ${action} after Verify OTP`,
         })
@@ -682,7 +682,7 @@ class AuthenticationServices {
                 "Tow Setup Verification Is Enabled Succses" :
                 "Tow Setup Verification Is Disabled Succses";
 
-        return succsesResponse({
+        return successResponse({
             res,
             info,
         })

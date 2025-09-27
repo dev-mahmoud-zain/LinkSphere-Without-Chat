@@ -8,8 +8,7 @@ export class ChatGateway {
     private chatEvents = new ChatEvents();
 
     register = (socket:IAuthSocket , io:Server) => {
-
         this.chatEvents.sayHi(socket);
-
+        this.chatEvents.sendMessage(socket,io);
     }
 }

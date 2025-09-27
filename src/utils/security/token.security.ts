@@ -1,6 +1,6 @@
 import jwt, { JwtPayload, Secret, SignOptions } from "jsonwebtoken";
 import { ObjectId } from "mongoose";
-import { HUserDoucment, RoleEnum, UserModel } from "../../DataBase/models/user.model";
+import { HUserDocument, RoleEnum, UserModel } from "../../DataBase/models/user.model";
 import { BadRequestException, InvalidTokenException, UnAuthorizedException } from "../response/error.response";
 import { v4 as uuid } from "uuid"
 import { HTokenDocument, TokenModel } from "../../DataBase/models/token.model";
@@ -29,7 +29,7 @@ export enum SignatureLevelEnum {
 
 
 export enum TokenTypeEnum {
-    accses = "accses",
+    access = "access",
     refresh = "refresh"
 }
 
@@ -65,18 +65,18 @@ export class TokenService {
     }
 
     private getSignatures = async (signatureLevel: SignatureLevelEnum = SignatureLevelEnum.Bearer):
-        Promise<{ accses_signature: string, refresh_signature: string }> => {
+        Promise<{ access_signature: string, refresh_signature: string }> => {
 
-        let signatures: { accses_signature: string, refresh_signature: string }
-            = { accses_signature: "", refresh_signature: "" }
+        let signatures: { access_signature: string, refresh_signature: string }
+            = { access_signature: "", refresh_signature: "" }
 
         switch (signatureLevel) {
             case SignatureLevelEnum.System:
-                signatures.accses_signature = process.env.ACCESS_SYSTEM_TOKEN_SIGNATURE as string;
+                signatures.access_signature = process.env.ACCESS_SYSTEM_TOKEN_SIGNATURE as string;
                 signatures.refresh_signature = process.env.REFRESH_SYSTEM_TOKEN_SIGNATURE as string;
                 break;
             default:
-                signatures.accses_signature = process.env.ACCESS_USER_TOKEN_SIGNATURE as string;
+                signatures.access_signature = process.env.ACCESS_USER_TOKEN_SIGNATURE as string;
                 signatures.refresh_signature = process.env.REFRESH_USER_TOKEN_SIGNATURE as string;
                 break;
         }
@@ -98,16 +98,16 @@ export class TokenService {
         return await jwt.verify(token, secretKey) as JwtPayload;
     }
 
-    createLoginCredentials = async (user: HUserDoucment): Promise<{ accses_token: string, refresh_token: string }> => {
+    createLoginCredentials = async (user: HUserDocument): Promise<{ access_token: string, refresh_token: string }> => {
 
         const signatureLevel = await this.detectSignatureLevel(user.role);
         const signatures = await this.getSignatures(signatureLevel)
 
         const jwtid = uuid();
 
-        const accses_token = await this.generateToken({
+        const access_token = await this.generateToken({
             payload: { _id: user._id, role: user.role },
-            secretKey: signatures.accses_signature,
+            secretKey: signatures.access_signature,
             options: { expiresIn: "1h", jwtid }
         })
 
@@ -117,13 +117,13 @@ export class TokenService {
             options: { expiresIn: "1y", jwtid }
         })
 
-        return { accses_token, refresh_token }
+        return { access_token, refresh_token }
 
 
     }
 
     decodeToken = async ({ authorization,
-        tokenType = TokenTypeEnum.accses }:
+        tokenType = TokenTypeEnum.access }:
         { authorization: string, tokenType: TokenTypeEnum }) => {
 
         const [bearerKey, token] = authorization.split(" ");
@@ -141,8 +141,8 @@ export class TokenService {
         const decoded = await this.verifyToken({
             token,
             secretKey: tokenType ===
-                TokenTypeEnum.accses ?
-                signatures.accses_signature :
+                TokenTypeEnum.access ?
+                signatures.access_signature :
                 signatures.refresh_signature
         })
 

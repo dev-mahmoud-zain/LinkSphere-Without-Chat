@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { succsesResponse } from "../../utils/response/succses.response";
+import { successResponse } from "../../utils/response/success.response";
 import { PostRepository, UserRepository, CommentRepository } from "../../DataBase/repository";
-import { UserModel, PostModel, CommentModel, AllowCommentsEnum, HPostDucment, CommentFlagEnum } from "../../DataBase/models";
+import { UserModel, PostModel, CommentModel, AllowCommentsEnum, HPostDocument, CommentFlagEnum } from "../../DataBase/models";
 import { BadRequestException, NotFoundException } from "../../utils/response/error.response";
 import { I_CreateCommentInputs, I_ReplyOnCommentInputs, I_UpdateCommentInputs } from "./comments.dto";
 import { postAvailability } from "../003-posts";
@@ -17,7 +17,7 @@ export class Comments {
 
     constructor() { }
 
-    private postExists = async (postId: Types.ObjectId, req: Request): Promise<HPostDucment | Boolean> => {
+    private postExists = async (postId: Types.ObjectId, req: Request): Promise<HPostDocument | Boolean> => {
         const post = await this.postModel.findOne({
             filter: {
                 _id: postId,
@@ -37,7 +37,7 @@ export class Comments {
 
         const postId = req.params.postId as unknown as Types.ObjectId;
 
-        const post = await this.postExists(postId, req) as HPostDucment;
+        const post = await this.postExists(postId, req) as HPostDocument;
 
         if (!post) {
             throw new NotFoundException("Post Not Found Or Cannot Create Comment")
@@ -83,7 +83,7 @@ export class Comments {
             throw new BadRequestException("Fail To Create Comment");
         }
 
-        return succsesResponse({
+        return successResponse({
             res, statusCode: 201,
             info: "Comment Created Succses",
             data: { commentId: comment._id }
@@ -115,7 +115,7 @@ export class Comments {
             throw new BadRequestException("Comment Not Exist");
         }
 
-        return succsesResponse({
+        return successResponse({
             res, statusCode: 200,
             data: { comment }
         });
@@ -131,7 +131,7 @@ export class Comments {
         }
         const userId = req.user?._id as unknown as Types.ObjectId;
 
-        const post = await this.postExists(postId, req) as HPostDucment;
+        const post = await this.postExists(postId, req) as HPostDocument;
 
         if (!post) {
             throw new NotFoundException("Post Not Found Or Cannot Update Comment")
@@ -225,7 +225,7 @@ export class Comments {
             throw new BadRequestException("Fail To Create Comment");
         }
 
-        return succsesResponse({
+        return successResponse({
             res, statusCode: 201,
             info: "Comment Updated Succses",
             data: { commentId: comment._id }
@@ -242,7 +242,7 @@ export class Comments {
             commentId: Types.ObjectId
         };
 
-        const post = await this.postExists(postId, req) as HPostDucment
+        const post = await this.postExists(postId, req) as HPostDocument
 
         if (!post) {
             throw new BadRequestException("Post Not Found");
@@ -301,7 +301,7 @@ export class Comments {
             throw new BadRequestException("Fail To Create Comment");
         }
 
-        return succsesResponse({
+        return successResponse({
             res, statusCode: 201,
             info: "Replyed Succses",
             data: { replyId: reply._id }
@@ -350,7 +350,7 @@ export class Comments {
             }, updateData
         });
 
-        return succsesResponse({
+        return successResponse({
             res,
             message
         });
@@ -407,7 +407,7 @@ export class Comments {
 
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Comment Deleted Succses"
         });

@@ -207,7 +207,7 @@ export const getAsset = async ({
     return await s3Config().send(command);
 }
 
-export const getPreSigndUrl = async (
+export const getPreSignedUrl = async (
     {
         Bucket = process.env.S3_BUCKET_NAME as string,
         Key

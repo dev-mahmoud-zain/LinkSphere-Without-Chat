@@ -1,21 +1,21 @@
 import { HydratedDocument, model, models, Schema, Types } from "mongoose";
 
-export interface IFriendRequst {    
+export interface IFriendRequest {    
     sendBy: Types.ObjectId;
     sendTo: Types.ObjectId;
     acceptedAt?:Date;
 
-    cretedAt: Date;
+    createdAt: Date;
     updatedAt?: Date;
 }
 
-export type HFriendRequst = HydratedDocument<IFriendRequst>;
+export type HFriendRequest = HydratedDocument<IFriendRequest>;
 
-const friendRequstSchima = new Schema<IFriendRequst>({
+const friendRequestSchema = new Schema<IFriendRequest>({
     sendBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     sendTo: { type: Schema.Types.ObjectId, ref: "User", required: true },
     acceptedAt: Date,
-    cretedAt: Date,
+    createdAt: Date,
     updatedAt: Date,
 
 }, {
@@ -23,4 +23,4 @@ const friendRequstSchima = new Schema<IFriendRequst>({
     strictQuery: true,
 });
 
-export const FriendRequstModel = models.FriendRequstModel || model("FriendRequst", friendRequstSchima);
+export const FriendRequestModel = models.FriendRequestModel || model("FriendRequest", friendRequestSchema);

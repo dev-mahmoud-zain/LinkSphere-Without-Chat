@@ -8,7 +8,7 @@ import { BadRequestException } from "../../utils/response/error.response";
 
 const tokenService = new TokenService()
 
-export const connectedSockets = new Map<string, string>();
+export const connectedSockets = new Map<string, string[]>();
 
 let io: undefined | Server = undefined;
 
@@ -22,23 +22,28 @@ export const initializeIo = (httpServer: HttpServer) => {
         }
     });
 
-    function HandleDisconect(socket: IAuthSocket) {
+    function HandleDisconnect(socket: IAuthSocket) {
         return socket.on("disconnect", () => {
             connectedSockets.delete(socket.credentials?.decoded?._id.toString());
             getIo().emit("offline_user", socket.credentials?.decoded?._id.toString());
         })
     }
 
-    // Initialize Midlleware
+    // Initialize Middleware
     getIo().use(async (socket: IAuthSocket, next) => {
         try {
             socket.credentials = await tokenService.decodeToken({
                 authorization: socket.handshake.auth.authorization,
-                tokenType: TokenTypeEnum.accses
+                tokenType: TokenTypeEnum.access
             });
-            connectedSockets.set(socket.credentials.decoded?._id.toString(), socket.id);
 
-            console.log("Coneected Sockets", connectedSockets)
+            const userId = socket.credentials.decoded?._id.toString();
+            if (!connectedSockets.has(userId)) {
+                connectedSockets.set(userId, []);
+            }
+            
+            connectedSockets.get(userId)!.push(socket.id);
+
             next();
 
         } catch (error: any) {
@@ -54,16 +59,19 @@ export const initializeIo = (httpServer: HttpServer) => {
 
         getIo().emit("online_user", socket.credentials?.decoded?._id.toString());
 
-        chatGateway.register(socket,getIo());
+        // console.log(connectedSockets)
 
-        // Handle Disconect
-        HandleDisconect(socket);
+
+        chatGateway.register(socket, getIo());
+
+        // Handle Disconnect
+        HandleDisconnect(socket);
 
     })
 
 }
 
-export const getIo = ():Server => {
+export const getIo = (): Server => {
 
     if (!io) {
         throw new BadRequestException("Fail To Connect To Io");

@@ -3,14 +3,14 @@ import { Comments } from "./comments.service";
 import { validationMiddleware } from "../../middlewares/validation.middleware";
 import * as validation from "./comments.validation";
 import { cloudFileUpload, fileValidation, StorageEnum } from "../../utils/multer/cloud.,multer";
-import { authenticationMiddeware } from "../../middlewares/authentication.middleware";
+import { authenticationMiddleware } from "../../middlewares/authentication.middleware";
 
 const router = Router({ mergeParams: true });
 const comments = new Comments();
 
 
 router.post("/comment",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     cloudFileUpload({
         validation: fileValidation.image,
         storageApproach: StorageEnum.disk
@@ -20,13 +20,13 @@ router.post("/comment",
 
 
 router.get("/comment/:commentId",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(validation.getComment),
     comments.getComment);
 
 
 router.patch("/update/:commentId",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     cloudFileUpload({
         validation: fileValidation.image,
         storageApproach: StorageEnum.disk
@@ -35,7 +35,7 @@ router.patch("/update/:commentId",
     comments.updateComment);
 
 router.post("/:commentId/reply",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     cloudFileUpload({
         validation: fileValidation.image,
         storageApproach: StorageEnum.disk
@@ -44,11 +44,11 @@ router.post("/:commentId/reply",
     comments.replyOnComment);
 
 router.post("/:commentId/like",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     comments.likeComment);
 
 router.delete("/delete/:commentId",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(validation.deleteComment),
     comments.deleteComment);
 

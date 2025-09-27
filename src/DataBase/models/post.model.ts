@@ -1,5 +1,5 @@
 import { HydratedDocument, model, models, Schema, Types } from "mongoose";
-import { HUserDoucment, UserModel } from "./user.model";
+import { HUserDocument, UserModel } from "./user.model";
 import { UserRepository } from "../repository";
 import { emailEvent } from "../../utils/email/email.events";
 
@@ -42,7 +42,7 @@ export interface IPost {
     updatedAt?: Date;
 }
 
-export type HPostDucment = HydratedDocument<IPost>;
+export type HPostDocument = HydratedDocument<IPost>;
 
 const postSchima = new Schema<IPost>({
 
@@ -96,7 +96,7 @@ postSchima.virtual("lastComment",{
 
 postSchima.pre("save",
 
-    async function (this: HPostDucment & { _tags: Types.ObjectId[] | undefined, _postId: Types.ObjectId, _createdBy: Types.ObjectId }) {
+    async function (this: HPostDocument & { _tags: Types.ObjectId[] | undefined, _postId: Types.ObjectId, _createdBy: Types.ObjectId }) {
 
         if (this.modifiedPaths().includes("tags")) {
             this._tags = this.tags;
@@ -107,15 +107,15 @@ postSchima.pre("save",
     });
 
 postSchima.post("save",
-    async function (this: HPostDucment & { _tags?: Types.ObjectId[], _postId: Types.ObjectId, _createdBy: Types.ObjectId }) {
+    async function (this: HPostDocument & { _tags?: Types.ObjectId[], _postId: Types.ObjectId, _createdBy: Types.ObjectId }) {
 
-        let users: HUserDoucment[] = [];
+        let users: HUserDocument[] = [];
 
         if (this._tags?.length) {
             const result = await userModel.find({
                 filter: { _id: { $in: this._tags } }
             });
-            users = result.data as HUserDoucment[];
+            users = result.data as HUserDocument[];
         }
 
 

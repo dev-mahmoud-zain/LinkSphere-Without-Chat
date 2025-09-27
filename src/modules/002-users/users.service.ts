@@ -3,19 +3,19 @@ import {
     deleteFile,
     deleteFiles,
     deleteFolderByPrefix,
-    getPreSigndUrl,
+    getPreSignedUrl,
     uploadFile,
     uploadFiles
 } from "../../utils/multer/s3.config";
 import { ApplicationException, BadRequestException, ConflictException, NotFoundException } from "../../utils/response/error.response";
-import { CommentRepository, FriendRequstRepository, PostRepository, UserRepository } from "../../DataBase/repository";
+import { ChatRepository, CommentRepository, FriendRequestRepository, PostRepository, UserRepository } from "../../DataBase/repository";
 import { JwtPayload } from "jsonwebtoken";
-import { succsesResponse } from "../../utils/response/succses.response";
+import { successResponse } from "../../utils/response/success.response";
 import { IChangePassword } from "../001-auth/dto/auth.dto";
 import { compareHash, generateHash } from "../../utils/security/hash.security";
 import { generateOTP } from "../../utils/security/OTP";
 import { emailEvent } from "../../utils/email/email.events";
-import { CommentModel, PostModel, HUserDoucment, UserModel, RoleEnum, FriendRequstModel } from "../../DataBase/models";
+import { CommentModel, PostModel, HUserDocument, UserModel, RoleEnum, FriendRequestModel, ChatModel } from "../../DataBase/models";
 import { Types } from "mongoose";
 
 class UserServise {
@@ -23,10 +23,11 @@ class UserServise {
     private userModel = new UserRepository(UserModel);
     private postModel = new PostRepository(PostModel);
     private commentModel = new CommentRepository(CommentModel);
-    private freindRequstModel = new FriendRequstRepository(FriendRequstModel);
+    private friendRequestModel = new FriendRequestRepository(FriendRequestModel);
+    private chatModel = new ChatRepository(ChatModel);
 
 
-    private unfreezUser = async (userId: Types.ObjectId, restoredBy: Types.ObjectId) => {
+    private unfreezeUser = async (userId: Types.ObjectId, restoredBy: Types.ObjectId) => {
 
         // Un UnFreez User
         await this.userModel.findOneAndUpdate({
@@ -82,7 +83,7 @@ class UserServise {
     // ============================ Profile Management =============================
 
     profile = async (req: Request, res: Response): Promise<Response> => {
-        // const { password, twoSetupVerificationCode, twoSetupVerificationCodeExpiresAt, ...safeUser } = req.user?.toObject() as HUserDoucment;
+        // const { password, twoSetupVerificationCode, twoSetupVerificationCodeExpiresAt, ...safeUser } = req.user?.toObject() as HUserDocument;
 
         interface IFriend {
             _id: string;
@@ -118,14 +119,14 @@ class UserServise {
         }
 
         if (user.picture) {
-            const key = await getPreSigndUrl({ Key: user.picture });
+            const key = await getPreSignedUrl({ Key: user.picture });
             user.picture = key
         }
 
         if (user.coverImages) {
             let keys = []
             for (const Key of user.coverImages) {
-                keys.push(await getPreSigndUrl({ Key }));
+                keys.push(await getPreSignedUrl({ Key }));
             }
             user.coverImages = keys;
         }
@@ -133,15 +134,31 @@ class UserServise {
         if (user.friends?.length) {
             for (const friend of user.friends as unknown as IFriend[]) {
                 if (friend.picture) {
-                    const friendKey = await getPreSigndUrl({ Key: friend.picture });
+                    const friendKey = await getPreSignedUrl({ Key: friend.picture });
                     friend.picture = friendKey || ""
                 }
             }
         }
 
-        return succsesResponse({
+        const groups = await this.chatModel.find({
+            filter: {
+                groupName: { $exists: true },
+                participants: { $in: req.user?._id }
+            }
+        })
+
+        if (groups?.data?.length) {
+            for (const group of groups.data) {
+                if (group.groupImage) {
+                    const groupKey = await getPreSignedUrl({ Key: group.groupImage });
+                    group.groupImage = groupKey || "";
+                }
+            }
+        }
+
+        return successResponse({
             res,
-            data: { user }
+            data: { user, groups: groups.data }
         })
 
     }
@@ -165,7 +182,7 @@ class UserServise {
             throw new BadRequestException("Fail To Upload Profile Picture")
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Profile Picture Uploaded Succses",
             data: { key }
@@ -191,7 +208,7 @@ class UserServise {
             coverImages: keys
         })
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Profile Picture Uploaded Succses",
             data: { keys }
@@ -218,7 +235,7 @@ class UserServise {
             $unset: { picture: 1 }
         })
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Profile Picture Deleted Succses",
         })
@@ -246,7 +263,7 @@ class UserServise {
             $unset: { coverImages: 1 }
         })
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Cover Images Deleted Succses",
         })
@@ -254,27 +271,25 @@ class UserServise {
     }
 
 
-
-
     // =============================  Friendship Management ===============================
 
-    sendFriendRequst = async (req: Request, res: Response): Promise<Response> => {
+    sendFriendRequest = async (req: Request, res: Response): Promise<Response> => {
 
         const { userId } = req.params as unknown as { userId: Types.ObjectId }
         const sendBy = req.user?._id as unknown as Types.ObjectId;
 
         if (userId === sendBy) {
-            throw new BadRequestException("User Cannot Send Friend Requst To Himself");
+            throw new BadRequestException("User Cannot Send Friend Request To Himself");
         }
 
-        if (await this.freindRequstModel.findOne({
+        if (await this.friendRequestModel.findOne({
             filter: {
                 sendBy: { $in: [userId, sendBy] },
                 sendto: { $in: [userId, sendBy] },
             }
         })
         ) {
-            throw new ConflictException("Friend Requst Alredy Exists");
+            throw new ConflictException("Friend Request Alredy Exists");
         }
 
         if (!await this.userModel.findOne({
@@ -283,35 +298,35 @@ class UserServise {
             throw new NotFoundException("User Not Found");
         }
 
-        const [friendRequst] = await this.freindRequstModel.create({
+        const [friendRequest] = await this.friendRequestModel.create({
             data: [{
                 sendTo: userId,
                 sendBy
             }]
         }) || []
 
-        if (!friendRequst) {
-            throw new BadRequestException("Fail To Send Friend Requst");
+        if (!friendRequest) {
+            throw new BadRequestException("Fail To Send Friend Request");
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             statusCode: 201,
-            message: "Friend Requst Sent Succses",
+            message: "Friend Request Sent Succses",
             data: {
-                requstId: friendRequst._id
+                RequestId: friendRequest._id
             }
         })
     }
 
-    acceptFriendRequst = async (req: Request, res: Response): Promise<Response> => {
+    acceptFriendRequest = async (req: Request, res: Response): Promise<Response> => {
 
-        const { requstId } = req.params as unknown as { requstId: Types.ObjectId }
+        const { RequestId } = req.params as unknown as { RequestId: Types.ObjectId }
         const reseverId = req.user?._id as unknown as Types.ObjectId;
 
-        const freindRequst = await this.freindRequstModel.findOneAndUpdate({
+        const freindRequest = await this.friendRequestModel.findOneAndUpdate({
             filter: {
-                _id: requstId,
+                _id: RequestId,
                 sendTo: reseverId,
                 acceptedAt: { $exists: false }
             }, updateData: {
@@ -319,14 +334,14 @@ class UserServise {
             }
         })
 
-        if (!freindRequst) {
-            throw new NotFoundException("Friend Requst Not Exists");
+        if (!freindRequest) {
+            throw new NotFoundException("Friend Request Not Exists");
         }
 
 
         const accepted = await Promise.all([
             this.userModel.updateOne({
-                _id: freindRequst.sendBy
+                _id: freindRequest.sendBy
             }, {
                 $addToSet: { friends: reseverId }
             }),
@@ -334,29 +349,29 @@ class UserServise {
             this.userModel.updateOne({
                 _id: reseverId
             }, {
-                $addToSet: { friends: freindRequst.sendBy }
+                $addToSet: { friends: freindRequest.sendBy }
             })
         ]);
 
         if (!accepted) {
-            throw new BadRequestException("Fail To Accept Requst")
+            throw new BadRequestException("Fail To Accept Request")
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             statusCode: 200,
-            message: "Friend Requst Sent Succses",
+            message: "Friend Request Sent Succses",
         })
     }
 
 
-    cancelFriendRequst = async (req: Request, res: Response): Promise<Response> => {
+    cancelFriendRequest = async (req: Request, res: Response): Promise<Response> => {
 
-        const { requstId } = req.params as unknown as { requstId: Types.ObjectId }
+        const { RequestId } = req.params as unknown as { RequestId: Types.ObjectId }
 
-        const requst = await this.freindRequstModel.findOneAndDelete({
+        const Request = await this.friendRequestModel.findOneAndDelete({
             filter: {
-                _id: requstId,
+                _id: RequestId,
                 acceptedAt: { $exists: false },
                 $or: [
                     { sendBy: req.user?._id, },
@@ -365,14 +380,14 @@ class UserServise {
             }
         })
 
-        if (!requst) {
-            throw new BadRequestException("No Matched Requst");
+        if (!Request) {
+            throw new BadRequestException("No Matched Request");
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             statusCode: 200,
-            message: "Friend Requst Deleted Succses",
+            message: "Friend Request Deleted Succses",
         });
 
     }
@@ -410,15 +425,13 @@ class UserServise {
             throw new BadRequestException("Fail To Remove Friend");
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             statusCode: 200,
             message: "Friend Removed Succses",
         });
 
     }
-
-
 
     // ========================= User Information Updates ==========================
 
@@ -491,7 +504,7 @@ class UserServise {
             throw new BadRequestException("Fail To Update User Data");
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Data Updated Succses",
         })
@@ -518,7 +531,7 @@ class UserServise {
 
         emailEvent.emit("confirmUpdatedEmail", { to: newEmail, OTPCode })
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Verify Your Email",
         })
@@ -536,7 +549,7 @@ class UserServise {
         })
 
         if (!user?.updateEmailOTP || !user?.updateEmailOTPExpiresAt || !user?.newEmail) {
-            throw new NotFoundException("No OTP Requsted For User");
+            throw new NotFoundException("No OTP Requested For User");
         }
 
         if (!await compareHash(OTP, user.updateEmailOTP)) {
@@ -562,7 +575,7 @@ class UserServise {
         })
 
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Verify Your Email",
         })
@@ -572,7 +585,7 @@ class UserServise {
     changePassword = async (req: Request, res: Response): Promise<Response> => {
 
 
-        const { _id, email, password } = req.user as HUserDoucment;
+        const { _id, email, password } = req.user as HUserDocument;
         const { oldPassword, newPassword }: IChangePassword = req.body
 
 
@@ -592,7 +605,7 @@ class UserServise {
 
 
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Your Password Changed Succses"
         })
@@ -603,7 +616,7 @@ class UserServise {
 
     // ============================= Account Control ===============================
 
-    freezAccount = async (req: Request, res: Response): Promise<Response> => {
+    freezeAccount = async (req: Request, res: Response): Promise<Response> => {
 
         const adminId = req.tokenDecoded?._id;
         let { userId } = req.params;
@@ -664,14 +677,14 @@ class UserServise {
             }
         })
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Account Freezed Succses",
         })
 
     }
 
-    unFreezAccountByAdmin = async (req: Request, res: Response): Promise<Response> => {
+    unFreezeAccountByAdmin = async (req: Request, res: Response): Promise<Response> => {
 
         const adminId = req.tokenDecoded?._id;
         let { userId } = req.params as unknown as {
@@ -679,16 +692,16 @@ class UserServise {
         };
 
         // UnFreezAccount
-        this.unfreezUser(userId, adminId)
+        this.unfreezeUser(userId, adminId)
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Account Unfreezed Succses",
         })
 
     }
 
-    unFreezAccountByAccountAuther = async (req: Request, res: Response): Promise<Response> => {
+    unFreezeAccountByAccountAuthor = async (req: Request, res: Response): Promise<Response> => {
 
         const { email, password } = req.body as unknown as {
             email: string,
@@ -721,9 +734,9 @@ class UserServise {
 
         const userId = user._id as unknown as Types.ObjectId;
 
-        await this.unfreezUser(userId, userId);
+        await this.unfreezeUser(userId, userId);
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Account Unfreezed Succses",
         })
@@ -752,7 +765,7 @@ class UserServise {
 
         await deleteFolderByPrefix({ path: `users/${user._id}` });
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Account Deleted Succses",
         })
@@ -790,7 +803,7 @@ class UserServise {
             throw new BadRequestException("Fail To Change Role");
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Role Updated Succses",
         })

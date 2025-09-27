@@ -51,7 +51,7 @@ export const confirmEmail = {
 
 export const verifyToken = {
     body: z.object({
-        tokenType: z.enum(TokenTypeEnum).default(TokenTypeEnum.accses),
+        tokenType: z.enum(TokenTypeEnum).default(TokenTypeEnum.access),
         token: generalFields.token
     })
 }

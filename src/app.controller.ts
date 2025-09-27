@@ -11,16 +11,11 @@ import { config } from "dotenv";
 config({ path: resolve("./config/.env.development") })
 
 
-import { authRouter, initializeIo, postsRouter, usersRouter } from "./modules/";
-import { glopalErrorHandler } from "./utils/response/error.response";
+import { authRouter, chatRouter, initializeIo, postsRouter, usersRouter } from "./modules/";
+import {  globalErrorHandler } from "./utils/response/error.response";
 import connectToDataBase from "./DataBase/DB_Connection";
 
-import listEndpoints from "express-list-endpoints";
 
-interface Endpoint {
-    path: string;
-    methods: string[];
-}
 
 // App Start Point
 export default async function bootstrap(): Promise<void> {
@@ -40,21 +35,19 @@ export default async function bootstrap(): Promise<void> {
     // DataBase
     await connectToDataBase();
 
-    // AppLcation Routing 
+    // Application Routing 
 
     // Main Router
     app.get("/", (req: Request, res: Response): Response => {
         return res.json({
             message: "Welcome To LinkSphere BackEnd API",
             info: "LinkSphere is a social networking application that connects people, enables sharing posts, and fosters meaningful interactions in a modern digital community.",
-            about: "This APP Created By Dev:Adham Zain @2025",
+            about: "This APP Created By Dev: Adham Zain @2025",
         })
     })
 
-    // Authentacition Router
+    // Authentication Router
     app.use("/auth", authRouter);
-
-
 
     // Users Router
     app.use("/users", usersRouter);
@@ -62,17 +55,7 @@ export default async function bootstrap(): Promise<void> {
     // Users Router
     app.use("/posts", postsRouter);
 
-    const endpoints = listEndpoints(app);
-
-    endpoints.forEach((ep: Endpoint) => {
-        ep.methods.forEach((method: string) => {
-            console.log(`${method} {{BASE_URL}}${ep.path}`);
-        });
-    });
-
-    console.log("=== START LISTING ENDPOINTS ===");
-    console.log(listEndpoints(app));
-    console.log("=== END LISTING ENDPOINTS ===");
+    app.use("/chat", chatRouter);
 
 
     // Get Asset From S3 :
@@ -84,21 +67,21 @@ export default async function bootstrap(): Promise<void> {
     // app.get("/images/*path", async (req, res): Promise<void> => {
     //     const { path } = req.params as { path: string[] };
     //     const Key = path.join("/");
-    //     // const s3Response = await getAsset({ Key });
-    //     // if (!s3Response?.Body) {
-    //     //     throw new BadRequestException("Fail To Fetch This Resourse");
-    //     // }
-    //     // res.setHeader(
-    //     //     "Content-Type",
-    //     //     s3Response.ContentType || "application/octet-stram"
-    //     // );
-    //     // return s3CreateWriteStram(s3Response.Body as NodeJS.ReadableStream, res);
-    //     res.json({key})
+    //     const s3Response = await getAsset({ Key });
+    //     if (!s3Response?.Body) {
+    //         throw new BadRequestException("Fail To Fetch This Resourse");
+    //     }
+    //     res.setHeader(
+    //         "Content-Type",
+    //         s3Response.ContentType || "application/octet-stram"
+    //     );
+    //     // return s3CreateWriteStream(s3Response.Body as NodeJS.ReadableStream, res);
+    //     res.json({Key})
     // })
 
 
     // Glopal Error Handler
-    app.use(glopalErrorHandler)
+    app.use(globalErrorHandler)
 
 
     // 404 Router 

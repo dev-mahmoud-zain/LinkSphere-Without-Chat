@@ -1,10 +1,10 @@
 import { Socket } from "socket.io";
-import { HUserDoucment } from "../../DataBase/models";
+import { HUserDocument } from "../../DataBase/models";
 import { JwtPayload } from "jsonwebtoken";
 
 export interface IAuthSocket extends Socket {
     credentials?: {
-        user?: Partial<HUserDoucment>;
+        user?: Partial<HUserDocument>;
         decoded?: JwtPayload;
     }
 }

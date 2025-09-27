@@ -2,7 +2,7 @@ import { Router } from "express";
 import AuthenticationServices from "./auth.service";
 import { validationMiddleware } from "../../middlewares/validation.middleware";
 import * as authValidators from "./auth.validation"
-import { authenticationMiddeware } from "../../middlewares/authentication.middleware";
+import { authenticationMiddleware } from "../../middlewares/authentication.middleware";
 import { TokenTypeEnum } from "../../utils/security/token.security";
 
 const router = Router();
@@ -40,11 +40,11 @@ router.post("/login/verify-otp-code",
 
 router.post("/logout",
     validationMiddleware(authValidators.logout),
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     AuthenticationServices.logout);
 
 router.get("/refresh-token",
-    authenticationMiddeware(TokenTypeEnum.refresh),
+    authenticationMiddleware(TokenTypeEnum.refresh),
     AuthenticationServices.refreshToken);
 
 
@@ -67,11 +67,11 @@ router.post("/change-forget-password",
 // ======================== Two-Step Verification (2FA) ========================
  
 router.patch("/change-two-setup-verification",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     AuthenticationServices.changeTwoSetupVerification);
 
 router.patch("/verify-enable-two-setup-verification",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(authValidators.verifyEnableTwoSetupVerification),
     AuthenticationServices.verifyEnableTwoSetupVerification);
 

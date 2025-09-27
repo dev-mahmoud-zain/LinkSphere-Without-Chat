@@ -169,7 +169,7 @@ userSchema.pre("findOneAndUpdate",
 
 
 userSchema.pre("save",
-    async function (this: HUserDoucment & { wasNew: boolean; OTPCode?: string }, next) {
+    async function (this: HUserDocument & { wasNew: boolean; OTPCode?: string }, next) {
 
         this.wasNew = this.isNew;
 
@@ -190,7 +190,7 @@ userSchema.pre("save",
 
 
 userSchema.post("save", async function (next) {
-    const that = this as HUserDoucment & { wasNew: boolean, OTPCode?: string }
+    const that = this as HUserDocument & { wasNew: boolean, OTPCode?: string }
     if (that.wasNew && that.OTPCode)
         emailEvent.emit("confirmEmail", { to: this.email, OTPCode: that.OTPCode });
 });
@@ -211,4 +211,4 @@ userSchema.pre(["updateOne", "findOne", "find"], function (next) {
 
 export const UserModel = models.User || model<IUser>("User", userSchema);
 
-export type HUserDoucment = HydratedDocument<IUser>;
+export type HUserDocument = HydratedDocument<IUser>;

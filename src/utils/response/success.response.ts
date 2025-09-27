@@ -1,7 +1,7 @@
 import { Response } from "express";
-import { HCommentDucment, HPostDucment, HUserDoucment } from "../../DataBase/models";
+import { HCommentDocument, HPostDocument, HUserDocument } from "../../DataBase/models";
 
-export const succsesResponse = (
+export const successResponse = (
     {
         res,
         statusCode = 200,
@@ -14,7 +14,7 @@ export const succsesResponse = (
             statusCode?: number,
             message?: string,
             info?: string | object
-            data?: object | HUserDoucment |HPostDucment | HCommentDucment ,
+            data?: object | HUserDocument |HPostDocument | HCommentDocument ,
 
         }): Response => {
 

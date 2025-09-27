@@ -1,35 +1,36 @@
 import { Router } from "express";
 import usersService from "./users.service";
-import { authenticationMiddeware, authorizationMiddeware } from "../../middlewares/authentication.middleware";
+import { authenticationMiddleware, authorizationMiddleware } from "../../middlewares/authentication.middleware";
 import { cloudFileUpload, fileValidation, StorageEnum } from "../../utils/multer/cloud.,multer";
 import { validationMiddleware } from "../../middlewares/validation.middleware";
 import * as usersValidation from "./users.validation";
 import { endPoints } from "./users.authorization";
+import {router as chatRouter} from "../006-chat"
 
 const router = Router();
-
+router.use("/:userId/chat",chatRouter)
 // ============================ Profile Management =============================
 
 router.get("/profile",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     usersService.profile);
 
 router.patch("/profile-picture",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     cloudFileUpload({ validation: fileValidation.image, storageApproach: StorageEnum.memory }).single("image")
     , usersService.uploadProfilePicture);
 
 router.patch("/profile-cover-images",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     cloudFileUpload({ validation: fileValidation.image, storageApproach: StorageEnum.disk }).array("images", 2)
     , usersService.uploadCoverImages);
 
 router.delete("/profile-picture",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     usersService.deleteProfilePicture);
 
 router.delete("/profile-cover-images",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     usersService.deleteCoverImages);
 
 
@@ -38,22 +39,22 @@ router.delete("/profile-cover-images",
 
 
 router.post("/friend-requst/:userId",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.sendFriendRequst),
-    usersService.sendFriendRequst);
+    usersService.sendFriendRequest);
 
 router.patch("/accept-friend-requst/:requstId",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.acceptFriendRequst),
-    usersService.acceptFriendRequst);
+    usersService.acceptFriendRequest);
 
 router.delete("/cancel-friend-requst/:requstId",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.cancelFriendRequst),
-    usersService.cancelFriendRequst);
+    usersService.cancelFriendRequest);
 
 router.delete("/remove-friend/:userId",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.removeFriend),
     usersService.removeFriend);
 
@@ -61,23 +62,23 @@ router.delete("/remove-friend/:userId",
 // ========================= User Information Updates ==========================
 
 router.patch("/update-basic-info",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.updateBasicInfo),
     usersService.updateBasicInfo);
 
 router.patch("/update-email",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.updateEmail),
     usersService.updateEmail);
 
 router.patch("/change-password",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.changePassword),
     usersService.changePassword);
 
 
 router.patch("/confirm-update-email",
-    authenticationMiddeware(),
+    authenticationMiddleware(),
     validationMiddleware(usersValidation.confirmUpdateEmail),
     usersService.confirmUpdateEmail);
 
@@ -86,21 +87,21 @@ router.patch("/confirm-update-email",
 
 
 router.delete("/freez/{:userId}",
-    authorizationMiddeware(endPoints.freezAccount),
+    authorizationMiddleware(endPoints.freezAccount),
     validationMiddleware(usersValidation.freezAccount),
-    usersService.freezAccount);
+    usersService.freezeAccount);
 
 router.patch("/un-freez/:userId/admin",
-    authorizationMiddeware(endPoints.unFreezAccountByAdmin),
+    authorizationMiddleware(endPoints.unFreezAccountByAdmin),
     validationMiddleware(usersValidation.unFreezAccountByAdmin),
-    usersService.unFreezAccountByAdmin);
+    usersService.unFreezeAccountByAdmin);
 
 router.patch("/un-freez/me",
     validationMiddleware(usersValidation.unFreezAccountByAccountAuther),
-    usersService.unFreezAccountByAccountAuther);
+    usersService.unFreezeAccountByAccountAuthor);
 
 router.delete("/delete/:userId",
-    authorizationMiddeware(endPoints.deleteAccount),
+    authorizationMiddleware(endPoints.deleteAccount),
     validationMiddleware(usersValidation.deleteAccount),
     usersService.deleteAccount);
 
@@ -115,7 +116,7 @@ router.delete("/delete/:userId",
 
 
 router.get("/change-role/:id",
-    authorizationMiddeware(endPoints.changeRole),
+    authorizationMiddleware(endPoints.changeRole),
     validationMiddleware(usersValidation.changeRole),
     usersService.changeRole);
 

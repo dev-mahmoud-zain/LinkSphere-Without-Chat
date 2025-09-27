@@ -24,16 +24,16 @@ clintIo.on("likePost", data => {
 })
 
 clintIo.on("offline_user", data => {
-    console.log({ offline_user:data });
+    console.log({ offline_user: data });
 })
 
 clintIo.on("online_user", data => {
-    console.log({ online_user:data });
+    console.log({ online_user: data });
 })
 
-clintIo.emit("sayHi","Hello From The Other Side",(data)=>{
-    console.log({data})
-})
+// clintIo.emit("sayHi","Hello From The Other Side",(data)=>{
+//     console.log({data})
+// })
 
 // // clintIo.emit("sendMessage", { content: "FE need  profile", sendTo: "68c1bfd8f91ee1f635b7f799" })
 // clintIo.on("profile", (data) => {
@@ -69,7 +69,6 @@ let friendImage = './avatar/Avatar-No-Background.png'
 function sendMessage(sendTo, type) {
     console.log({ sendTo, type });
 
-
     if (type == "ovo") {
         const data = {
             content: $("#messageBody").val(),
@@ -77,7 +76,7 @@ function sendMessage(sendTo, type) {
         }
         console.log({ data });
 
-        clintIo.emit('sendMessage', data)
+        clintIo.emit('send_message', data)
     } else if (type == "group") {
         const data = {
             content: $("#messageBody").val(),
@@ -89,14 +88,16 @@ function sendMessage(sendTo, type) {
 
 }
 
+
 // //sendCompleted
-clintIo.on('successMessage', (data) => {
+clintIo.on('success_message', (data) => {
     const { content } = data
     const div = document.createElement('div');
 
     div.className = 'me text-end p-2';
     div.dir = 'rtl';
-    const imagePath = globalProfile.profilePicture ? `${baseURL}/upload/${globalProfile.profilePicture}` : avatar
+    const imagePath = globalProfile.picture || avatar
+
     div.innerHTML = `
     <img class="chatImage" src="${imagePath}" alt="" srcset="">
     <span class="mx-2">${content}</span>
@@ -108,19 +109,19 @@ clintIo.on('successMessage', (data) => {
 
 
 // // //receiveMessage
-clintIo.on("newMessage", (data) => {
+clintIo.on("new_message", (data) => {
     console.log({ RM: data });
     const { content, from, groupId } = data
-    console.log({ from });
 
     let imagePath = avatar;
-    if (from?.profilePicture) {
-        imagePath = `${baseURL}/upload/${from.profilePicture}`
+    if (from?.picture) {
+        imagePath = from.picture
     }
+
+    console.log(imagePath)
+
     const onclickAttr = document.getElementById("sendMessage").getAttribute("onclick")
     const [base, currentOpenedChat] = onclickAttr?.match(/sendMessage\('([^']+)'/) || [];
-    console.log({ currentOpenedChat });
-    console.log({ onclickAttr, currentOpenedChat });
 
     if ((!groupId && currentOpenedChat === from._id) || (groupId && currentOpenedChat === groupId)) {
         const div = document.createElement('div');
@@ -148,11 +149,15 @@ clintIo.on("newMessage", (data) => {
 
 // // ******************************************************************** Show chat conversation
 function showData(sendTo, chat) {
+
     document.getElementById("sendMessage").setAttribute("onclick", `sendMessage('${sendTo}' , "ovo")`);
 
     document.getElementById('messageList').innerHTML = ''
+
     if (chat.messages?.length) {
+
         $(".noResult").hide()
+
         for (const message of chat.messages) {
 
             if (message.createdBy.toString() == globalProfile._id.toString()) {
@@ -165,7 +170,6 @@ function showData(sendTo, chat) {
                 `;
                 document.getElementById('messageList').appendChild(div);
             } else {
-
                 const div = document.createElement('div');
                 div.className = 'myFriend p-2';
                 div.dir = 'ltr';
@@ -178,6 +182,7 @@ function showData(sendTo, chat) {
 
         }
     } else {
+
         const div = document.createElement('div');
 
         div.className = 'noResult text-center  p-2';
@@ -190,37 +195,45 @@ function showData(sendTo, chat) {
 
     $(`#c_${sendTo}`).hide();
 
-
 }
 
 // //get chat conversation between 2 users and pass it to ShowData fun
 function displayChatUser(userId) {
-    console.log({ userId });
+
     axios({
         method: 'get',
-        url: `${baseURL}/user/${userId}/chat`,
+        url: `${baseURL}/users/${userId}/chat`,
         headers
     }).then(function (response) {
         const { chat } = response.data?.data
-        console.log({ chat });
+
+
         if (chat) {
+
+            console.log(chat.participants[0])
+
+
             if (chat.participants[0]._id.toString() == globalProfile._id.toString()) {
-                meImage = chat.participants[0].profilePicture ? `${baseURL}/upload/${chat.participants[0].profilePicture}` : avatar
-                friendImage = chat.participants[1].profilePicture ? `${baseURL}/upload/${chat.participants[1].profilePicture}` : avatar
+                meImage = chat.participants[0].picture ? chat.participants[0].picture : avatar
+                friendImage = chat.participants[1].picture ? chat.participants[1].picture : avatar
+
             } else {
-                meImage = chat.participants[1].profilePicture ? `${baseURL}/upload/${chat.participants[1].profilePicture}` : avatar
-                friendImage = chat.participants[0].profilePicture ? `${baseURL}/upload/${chat.participants[0].profilePicture}` : avatar
+                meImage = chat.participants[1].picture ? chat.participants[1].picture : avatar
+                friendImage = chat.participants[0].picture ? chat.participants[0].picture : avatar
             }
 
             showData(userId, chat)
+
         } else {
             showData(userId, 0)
         }
 
     }).catch(function (error) {
+
         console.log(error);
         console.log({ status: error.status });
-        if (error.status == 404) {
+
+        if (error.status == 400) {
             showData(userId, 0)
         } else {
             alert("Ops something went wrong")
@@ -255,7 +268,7 @@ function showGroupData(sendTo, chat) {
                 const div = document.createElement('div');
                 div.className = 'myFriend p-2';
                 div.dir = 'ltr';
-                const friendImage = message.createdBy.profilePicture ? `${baseURL}/upload/${message.createdBy.profilePicture}` : avatar
+                const friendImage = message.createdBy.picture ? message.createdBy.picture : avatar
                 div.innerHTML = `
                 <img class="chatImage" src="${friendImage}" alt="" srcset="">
                 <span class="mx-2">${message.content}</span>
@@ -289,7 +302,7 @@ function displayGroupChat(groupId) {
         const { chat } = response.data?.data
         console.log({ chat });
         if (chat) {
-            meImage = globalProfile.profilePicture ? `${baseURL}/upload/${globalProfile.profilePicture}` : avatar
+            meImage = globalProfile.picture ? globalProfile.picture : avatar
             showGroupData(groupId, chat)
         } else {
             showGroupData(groupId, 0)
@@ -317,34 +330,33 @@ function getUserData() {
         url: `${baseURL}/users/profile`,
         headers
     }).then(function (response) {
-        console.log(response.data);
-
         const { user, groups } = response.data?.data;
-        console.log({ user });
 
         globalProfile = user;
-        let imagePath = avatar;
-
-        if (user.picture) {
-            imagePath = user.picture
-        }
+        let imagePath = user.picture ? user.picture : avatar;
 
         document.getElementById("profileImage").src = imagePath
         document.getElementById("userName").innerHTML = `${user.userName}`
+
         showUsersData(user.friends)
         showGroupList(groups)
+
     }).catch(function (error) {
         console.log(error);
     });
 }
+
 // Show friends list
 function showUsersData(users = []) {
+
     let cartonna = ``
+
     for (let i = 0; i < users.length; i++) {
-        let imagePath = avatar;
-        if (users[i].picture) {
-            imagePath = users[i].picture
-        }
+
+        let imagePath = users[i].picture ? users[i].picture : avatar;
+
+        console.log(imagePath)
+
         cartonna += `
         <div onclick="displayChatUser('${users[i]._id}')" class="chatUser my-2">
         <img class="chatImage" src="${imagePath}" alt="" srcset="">
@@ -356,7 +368,6 @@ function showUsersData(users = []) {
         
         `
     }
-
     document.getElementById('chatUsers').innerHTML = cartonna;
 }
 
@@ -365,13 +376,13 @@ function showGroupList(groups = []) {
     let cartonna = ``
     for (let i = 0; i < groups.length; i++) {
         let imagePath = avatar;
-        if (groups[i].group_image) {
-            imagePath = `${baseURL}/upload/${groups[i].group_image}`
+        if (groups[i].groupImage) {
+            imagePath = groups[i].groupImage;
         }
         cartonna += `
         <div onclick="displayGroupChat('${groups[i]._id}')" class="chatUser my-2">
         <img class="chatImage" src="${imagePath}" alt="" srcset="">
-        <span class="ps-2">${groups[i].group}</span>
+        <span class="ps-2">${groups[i].groupName}</span>
            <span id="${"g_" + groups[i]._id}" class="ps-2 closeSpan">
            🟢
         </span>
@@ -381,7 +392,6 @@ function showGroupList(groups = []) {
         clintIo.emit("join_room", { roomId: groups[i].roomId })
 
     }
-
 
     document.getElementById('chatGrups').innerHTML = cartonna;
 }

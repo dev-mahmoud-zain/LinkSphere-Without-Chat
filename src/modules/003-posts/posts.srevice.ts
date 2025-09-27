@@ -1,7 +1,7 @@
 import { Request, Response } from "express";
-import { succsesResponse } from "../../utils/response/succses.response";
+import { successResponse } from "../../utils/response/success.response";
 import { CommentRepository, PostRepository, UserRepository } from "../../DataBase/repository";
-import { AvailabilityEnum, HPostDucment, PostModel } from "../../DataBase/models/post.model";
+import { AvailabilityEnum, HPostDocument, PostModel } from "../../DataBase/models/post.model";
 import { UserModel } from "../../DataBase/models/user.model";
 import { BadRequestException, NotFoundException } from "../../utils/response/error.response";
 import { I_CreatePostInputs } from "./dto/posts.dto";
@@ -80,7 +80,7 @@ export class PostService {
             throw new BadRequestException("Fail To Create Post");
         }
 
-        return succsesResponse({
+        return successResponse({
             res, statusCode: 201,
             info: "Post Created Succses", data: {
                 postId: post._id
@@ -222,7 +222,7 @@ export class PostService {
             }
         }
 
-        return succsesResponse({
+        return successResponse({
             res, statusCode: 200,
             info: "Post Updated Succses"
         });
@@ -262,7 +262,7 @@ export class PostService {
             limit
         });
 
-        return succsesResponse({
+        return successResponse({
             res,
             data: {
                 ...(page && posts.pagination),
@@ -306,7 +306,7 @@ export class PostService {
             throw new NotFoundException("Post Not Found!");
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             data:
                 post
@@ -347,7 +347,7 @@ export class PostService {
             }, updateData
         });
 
-        return succsesResponse({
+        return successResponse({
             res,
             message
         });
@@ -386,7 +386,7 @@ export class PostService {
         });
 
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Post Freezed Succses"
         });
@@ -435,7 +435,7 @@ export class PostService {
             }
         });
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Post Un Freezed Succses"
         });
@@ -451,7 +451,7 @@ export class PostService {
                 _id: postId,
                 createdBy: userId
             }
-        }) as unknown as HPostDucment;
+        }) as unknown as HPostDocument;
 
         if (!post) {
             throw new NotFoundException("Post Not Found Or No Authorized To Remove");
@@ -465,7 +465,7 @@ export class PostService {
             await deleteFolderByPrefix({ path: `users/${userId}/posts/${post.assetsFolderId}` });
         }
 
-        return succsesResponse({
+        return successResponse({
             res,
             message: "Post Deleted Succses"
         });
