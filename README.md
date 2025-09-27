@@ -139,29 +139,33 @@ BASE_URL
 
 ## 🔑 Auth Module
 
-### 🔹 Profile Management
-- `GET /users/profile` → Retrieve user profile details  
-- `PATCH /users/profile-picture` → Upload or update profile picture  
-- `DELETE /users/profile-picture` → Delete current profile picture  
-- `PATCH /users/profile-cover-images` → Upload or update cover images  
-- `DELETE /users/profile-cover-images` → Delete current cover images  
 
-### 🔹 Friendship Management
-- `POST /users/friend-request/:userId` → Send a friend request  
-- `PATCH /users/accept-friend-request/:requestId` → Accept a pending friend request  
-- `DELETE /users/cancel-friend-request/:requestId` → Cancel a sent friend request  
-- `DELETE /users/remove-friend/:friendId` → Remove an existing friend  
+### 🔹 Account Registration & Email Verification
+- `POST /auth/signup` → Register a new account  
+- `PATCH /auth/confirm-email` → Confirm email using OTP  
+- `POST /auth/re-send-confirm-email-otp` → Resend OTP for email confirmation  
+- `POST /auth/signup-with-gmail` → Sign up / Log in using Gmail  
 
-### 🔹 User Information Updates
-- `PATCH /users/update-basic-info` → Update basic profile info (name, gender, phone)  
-- `PATCH /users/update-email` → Request email change (sends OTP)  
-- `PATCH /users/confirm-update-email` → Confirm email change using OTP  
-- `PATCH /users/change-password` → Change account password  
+---
 
-### 🔹 Account Control
-- `DELETE /users/freeze/:userId?` → Freeze account (self or admin)  
-- `PATCH /users/un-freeze/me` → Unfreeze own account (if self-frozen)  
+### 🔹 Login & Session Management
+- `POST /auth/login` → Log in with email & password  
+- `POST /auth/login/verify-otp-code` → Verify OTP if Two-Step Verification is enabled  
+- `POST /auth/logout` → Log out (from current device or all devices)  
+- `GET /auth/refresh-token` → Refresh Access & Refresh tokens  
 
+---
+
+### 🔹 Password Reset (Forget Password Flow)
+- `POST /auth/forget-password` → Request OTP to reset password  
+- `POST /auth/resend-forget-password-otp` → Resend OTP (limited attempts)  
+- `POST /auth/change-forget-password` → Change password after verifying OTP  
+
+---
+
+### 🔹 Two-Step Verification (2FA)
+- `PATCH /auth/change-two-setup-verification` → Enable/disable 2FA (OTP sent to email)  
+- `PATCH /auth/verify-enable-two-setup-verification` → Confirm enable/disable 2FA with OTP  
 ---
 
 ## 👤 Users Module
