@@ -5,10 +5,9 @@ import { cloudFileUpload, fileValidation, StorageEnum } from "../../utils/multer
 import { validationMiddleware } from "../../middlewares/validation.middleware";
 import * as usersValidation from "./users.validation";
 import { endPoints } from "./users.authorization";
-import {router as chatRouter} from "../006-chat"
 
 const router = Router();
-router.use("/:userId/chat",chatRouter)
+
 // ============================ Profile Management =============================
 
 router.get("/profile",
@@ -104,12 +103,6 @@ router.delete("/delete/:userId",
     authorizationMiddleware(endPoints.deleteAccount),
     validationMiddleware(usersValidation.deleteAccount),
     usersService.deleteAccount);
-
-
-
-
-
-
 
 
 // ============================= Admin Control ===============================

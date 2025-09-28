@@ -8,23 +8,21 @@ import {
     uploadFiles
 } from "../../utils/multer/s3.config";
 import { ApplicationException, BadRequestException, ConflictException, NotFoundException } from "../../utils/response/error.response";
-import { ChatRepository, CommentRepository, FriendRequestRepository, PostRepository, UserRepository } from "../../DataBase/repository";
+import { CommentRepository, FriendRequestRepository, PostRepository, UserRepository } from "../../DataBase/repository";
 import { JwtPayload } from "jsonwebtoken";
 import { successResponse } from "../../utils/response/success.response";
-import { IChangePassword } from "../001-auth/dto/auth.dto";
 import { compareHash, generateHash } from "../../utils/security/hash.security";
 import { generateOTP } from "../../utils/security/OTP";
 import { emailEvent } from "../../utils/email/email.events";
-import { CommentModel, PostModel, HUserDocument, UserModel, RoleEnum, FriendRequestModel, ChatModel } from "../../DataBase/models";
+import { CommentModel, PostModel, HUserDocument, UserModel, RoleEnum, FriendRequestModel } from "../../DataBase/models";
 import { Types } from "mongoose";
 
-class UserServise {
+class UserService {
 
     private userModel = new UserRepository(UserModel);
     private postModel = new PostRepository(PostModel);
     private commentModel = new CommentRepository(CommentModel);
     private friendRequestModel = new FriendRequestRepository(FriendRequestModel);
-    private chatModel = new ChatRepository(ChatModel);
 
 
     private unfreezeUser = async (userId: Types.ObjectId, restoredBy: Types.ObjectId) => {
@@ -45,7 +43,7 @@ class UserServise {
             }
         });
 
-        // UnFreez All Posts And Comments For User 
+        // UnFreeze All Posts And Comments For User 
         await this.postModel.updateMany({
             createdBy: userId,
             freezedAt: { $exists: true },
@@ -83,7 +81,6 @@ class UserServise {
     // ============================ Profile Management =============================
 
     profile = async (req: Request, res: Response): Promise<Response> => {
-        // const { password, twoSetupVerificationCode, twoSetupVerificationCodeExpiresAt, ...safeUser } = req.user?.toObject() as HUserDocument;
 
         interface IFriend {
             _id: string;
@@ -140,25 +137,12 @@ class UserServise {
             }
         }
 
-        const groups = await this.chatModel.find({
-            filter: {
-                groupName: { $exists: true },
-                participants: { $in: req.user?._id }
-            }
-        })
 
-        if (groups?.data?.length) {
-            for (const group of groups.data) {
-                if (group.groupImage) {
-                    const groupKey = await getPreSignedUrl({ Key: group.groupImage });
-                    group.groupImage = groupKey || "";
-                }
-            }
-        }
+
 
         return successResponse({
             res,
-            data: { user, groups: groups.data }
+            data: { user }
         })
 
     }
@@ -184,7 +168,7 @@ class UserServise {
 
         return successResponse({
             res,
-            message: "Profile Picture Uploaded Succses",
+            message: "Profile Picture Uploaded Success",
             data: { key }
         })
 
@@ -586,7 +570,7 @@ class UserServise {
 
 
         const { _id, email, password } = req.user as HUserDocument;
-        const { oldPassword, newPassword }: IChangePassword = req.body
+        const { oldPassword, newPassword } = req.body
 
 
         if (!await compareHash(oldPassword, password)) {
@@ -812,4 +796,4 @@ class UserServise {
 
 }
 
-export default new UserServise()
+export default new UserService()
