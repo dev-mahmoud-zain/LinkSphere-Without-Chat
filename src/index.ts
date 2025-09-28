@@ -20,7 +20,7 @@ import connectToDataBase from "./DataBase/DB_Connection";
 // App Start Point
 
 const app = express();
-const port: Number | String = process.env.PORT || 5000;
+// const port: Number | String = process.env.PORT || 5000;
 
 // Third Party MiddleWares
 const limiter = rateLimit({
@@ -91,8 +91,11 @@ app.all("{*dummy}", (req: Request, res: Response) => {
 });
 
 
-app.listen(port, () => {
-    console.log("===================================")
-    console.log("LinkSphere App Is Running Success 🚀")
-    console.log("===================================")
-});
+// app.listen(port, () => {
+//     console.log("===================================")
+//     console.log("LinkSphere App Is Running Success 🚀")
+//     console.log("===================================")
+// });
+
+
+export default app;
